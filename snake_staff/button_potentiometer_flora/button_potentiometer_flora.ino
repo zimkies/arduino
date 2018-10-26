@@ -2,7 +2,7 @@
 #include <Button.h>
 
 // How many leds in your strip?
-#define NUM_LEDS 30
+#define NUM_LEDS 60
 
 // For led chips like Neopixels, which have a data line, ground, and power, you just
 // need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
@@ -10,9 +10,9 @@
 #define DATA_PIN 6
 #define CLOCK_PIN 13
 #define MAX_BRIGHTNESS 164      // Thats full on, watch the power!
-#define MIN_BRIGHTNESS 5       // set to a minimum of 25%
-#define BRIGHTNESS_IN_PIN A0    // The Analog input pin that the brightness control potentiometer is attached to.
-#define BUTTON_MODE_IN_PIN 3     // The PWM input for button mode
+#define MIN_BRIGHTNESS 1       // set to a minimum of 25%
+#define BRIGHTNESS_IN_PIN 10    // The Analog input pin that the brightness control potentiometer is attached to.
+#define BUTTON_MODE_IN_PIN 9     // The PWM input for button mode
 
 
 #define COLOR_ORDER RGB
@@ -169,8 +169,10 @@ void calibrateBrightness() {
   FastLED.setBrightness(constrain(brightness, MIN_BRIGHTNESS, MAX_BRIGHTNESS));
 
 }
+
 int getBrightnessValue() {
   // read the analog brightness value:
   // map it to the range of the FastLED brightness:
   return map(analogRead(BRIGHTNESS_IN_PIN), 0, 1023, 0, 255);
 }
+

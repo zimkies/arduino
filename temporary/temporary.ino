@@ -174,3 +174,4 @@ int getBrightnessValue() {
   // map it to the range of the FastLED brightness:
   return map(analogRead(BRIGHTNESS_IN_PIN), 0, 1023, 0, 255);
 }
+
