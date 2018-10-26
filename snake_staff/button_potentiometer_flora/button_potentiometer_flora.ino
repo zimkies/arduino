@@ -55,38 +55,15 @@ static uint8_t zoomIndex = 0;
 void loop() {
   calibrateBrightness();
 
+
   int patternMode = getPatternMode();
+  Serial.println("mode: ");
+  Serial.println(patternMode);
 
-  // Pattern 0 (zoom)
-  if (patternMode == 0) {
-    EVERY_N_MILLISECONDS(10) {
-      leds[zoomIndex] = CHSV(zoomHue++, 255, 255);
-      if ( zoomForward) {zoomIndex++;} else {zoomIndex--;};
-      FastLED.show();
-      fadeall();
-
-      if ( zoomIndex > NUM_LEDS - 1 || zoomIndex < 0 ) {
-        zoomForward = !zoomForward;
-      }
-    }
-  }
-
-  // Pattern 1 (Nothing)
-  if (patternMode == 1) {
-    FastLED.clear();
-    FastLED.show();
-
-  }
-
-  // Pattern 2
-  if (patternMode == 2) {
-      EVERY_N_MILLISECONDS(10) {
-        ChangePalettePeriodically();
-        static uint8_t startIndex = 0;
-        startIndex = startIndex + 1; /* motion speed */
-        FillLEDsFromPaletteColors( startIndex);
-        FastLED.show();
-      }
+  switch(patternMode) {
+    case 0: nothingPattern(); break;
+    case 1: zoomPattern(); break;
+    case 2: basicPalettePattern(); break;
   }
 }
 
@@ -99,15 +76,53 @@ int getPatternMode() {
   return currentMode;
 }
 
-// Zoom pattern (0) code
+// Nothing Pattern
 ///////////////////////////////////////////
+void nothingPattern() {
+  // EVERY_N_MILLISECONDS(10) {
+    FastLED.clear();
+    FastLED.show();
+  // }
+}
+
+
+///////////////////////////////////////////
+
+
+// Zoom back and forth pattern code
+///////////////////////////////////////////
+
+void zoomPattern() {
+  EVERY_N_MILLISECONDS(10) {
+    leds[zoomIndex] = CHSV(zoomHue++, 255, 255);
+
+    if ( zoomForward) {zoomIndex++;} else {zoomIndex--;};
+    FastLED.show();
+    fadeall();
+
+    if ( zoomIndex > NUM_LEDS - 1 || zoomIndex < 0 ) {
+      zoomForward = !zoomForward;
+    }
+  }
+}
 
 void fadeall() { for(int i = 0; i < NUM_LEDS; i++) { leds[i].nscale8(250); } }
 
 ///////////////////////////////////////////
 
-// Pattern 2: Upward pallett code
+// Basic Palette Code Pattern
 ///////////////////////////////////////////
+
+void basicPalettePattern() {
+  EVERY_N_MILLISECONDS(10) {
+    ChangePalettePeriodically();
+    static uint8_t startIndex = 0;
+    startIndex = startIndex + 1; /* motion speed */
+    FillLEDsFromPaletteColors( startIndex);
+    FastLED.show();
+  }
+}
+
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
