@@ -20,7 +20,7 @@
 #define LED_TYPE WS2811        // i'm using WS2811s, FastLED supports lots of different types.
 
 int currentMode = 0;
-#define MODE_COUNTS 5;
+#define MODE_COUNTS 3;
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
@@ -31,6 +31,8 @@ Button modeButton(BUTTON_MODE_IN_PIN, 100); // connect our button
 // Pattern 2 pallette globals
 CRGBPalette16 currentPalette;
 TBlendType    currentBlending;
+
+CRGBPalette16 whitePalette;
 //
 
 void setup() {
@@ -45,6 +47,8 @@ void setup() {
   // Pattern 2 initialization
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
+
+  fill_solid(whitePalette, 16, CRGB::White);
 }
 
 
@@ -62,11 +66,19 @@ void loop() {
   // Serial.println(patternMode);
 
   switch(patternMode) {
+    //
     case 0: nothingPattern(); break;
-    case 1: rainbowSingleSparklePattern(); break;
-    case 2: rainbowMultipleSparklePattern(); break;
-    case 3: zoomPattern(); break;
-    case 4: basicPalettePattern(); break;
+
+    case 1: basicPalettePattern(); break;
+    // case 0: nothingPattern(); break;
+    case 2: whiteBeams(); break;
+    // case 1: zoomIntervalPattern(); break;
+    // case 2: nothingPattern(); break;
+    // case 3: rainbowSingleSparklePattern(); break;
+    // case 4: nothingPattern(); break;
+    // case 5: rainbowMultipleSparklePattern(); break;
+    // case 6: nothingPattern(); break;
+    // case 7: basicPalettePattern(); break;
   }
 }
 
@@ -221,28 +233,77 @@ void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
 
 
 
-// Zoom back and forth pattern code
+// Zoom patterns back and forth pattern code
 ///////////////////////////////////////////
 
-void zoomPattern() {
-  EVERY_N_MILLISECONDS(10) {
-    leds[zoomIndex] = CHSV(zoomHue++, 255, 255);
+// Zooms back and forth for a copule seconds and then turns off.
+void zoomIntervalPattern() {
 
-    if ( zoomForward) {zoomIndex++;} else {zoomIndex--;};
+  EVERY_N_MILLISECONDS(10) {
+
+    uint8_t secondHand = (millis() / 1000) % 60;
+    // Only light up if we are in the 2 second interval (or are finishing up)
+    if ((secondHand % 10 < 2) or ( zoomIndex < NUM_LEDS - 1 and zoomIndex > 0 )) {
+      leds[zoomIndex] = CHSV(zoomHue++, 255, 255);
+      if ( zoomForward) {zoomIndex++;} else {zoomIndex--;};
+
+      if ( zoomIndex > NUM_LEDS - 1 || zoomIndex < 0 ) {
+        zoomForward = !zoomForward;
+      }
+    }
+
     FastLED.show();
     fadeall();
 
-    if ( zoomIndex > NUM_LEDS - 1 || zoomIndex < 0 ) {
-      zoomForward = !zoomForward;
-    }
   }
 }
 
 void fadeall() { for(int i = 0; i < NUM_LEDS; i++) { leds[i].nscale8(250); } }
 
+//////////////////////////////////////
+// Beamns
+
+
+//////////////////////////////////////
+
 ///////////////////////////////////////////
 
 // Basic Palette Code Pattern
+void whiteBeams() {
+  static bool fire_beam = false;
+  static int startBlockIndex = 0;
+  const int blockLength = 5;
+  static int colorIndex = 0;
+  const int brightness = 255;
+  static const CRGBPalette16 colorPalette = whitePalette;
+  static const TBlendType blending = LINEARBLEND;
+
+  EVERY_N_MILLISECONDS(3000) {
+    fire_beam = true;
+    startBlockIndex = 0;
+  }
+
+  EVERY_N_MILLISECONDS(10) {
+    // Only light up if we have fire_beam on
+    if (fire_beam) {
+      for( int i = 0; i < NUM_LEDS; i++) {
+        if (i >= startBlockIndex and i < startBlockIndex + 5) {
+          leds[i] = CRGB::White;//ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
+        } else {
+          leds[i] = CRGB::Black;
+        }
+        colorIndex += 1;
+      }
+      FastLED.show();
+      startBlockIndex++;
+
+      if (startBlockIndex > NUM_LEDS) {
+        fire_beam = false;
+      }
+    }
+  }
+}
+
 ///////////////////////////////////////////
 
 void basicPalettePattern() {
@@ -273,12 +334,11 @@ void ChangePalettePeriodically()
 
     if( lastSecond != secondHand) {
         lastSecond = secondHand;
-        if( secondHand ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
-        if( secondHand == 10)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
-        if( secondHand == 15)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
-        if( secondHand == 30)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
+        // if( secondHand ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
+        // if( secondHand == 15)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
+        if( secondHand == 0)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
         if( secondHand == 35)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
-        if( secondHand == 40)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
+        // if( secondHand == 40)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
     }
 }
 
@@ -286,6 +346,7 @@ void ChangePalettePeriodically()
 // using code.  Since the palette is effectively an array of
 // sixteen CRGB colors, the various fill_* functions can be used
 // to set them up.
+
 void SetupBlackAndWhiteStripedPalette()
 {
     // 'black out' all 16 palette entries...
@@ -297,6 +358,7 @@ void SetupBlackAndWhiteStripedPalette()
     currentPalette[12] = CRGB::White;
 
 }
+
 
 // This function fills the palette with totally random colors.
 void SetupTotallyRandomPalette()
