@@ -20,7 +20,7 @@
 #define LED_TYPE WS2811        // i'm using WS2811s, FastLED supports lots of different types.
 
 int currentMode = 0;
-#define MODE_COUNTS 6;
+#define MODE_COUNTS 8;
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
@@ -68,11 +68,13 @@ void loop() {
   switch(patternMode) {
     //
     case 0: nothingPattern(); break;
-    case 1: whiteBeams(); break;
-    case 2: zoomIntervalPattern(); break;
-    case 3: rainbowSingleSparklePattern(); break;
-    case 4: rainbowMultipleSparklePattern(); break;
-    case 5: basicPalettePattern(); break;
+    case 1: rainbowShimmering(100); break;
+    case 2: rainbowShimmering(50); break;
+    case 3: zoomIntervalPattern(); break;
+    case 4: whiteBeams(); break;
+    case 5: rainbowSingleSparklePattern(); break;
+    case 6: rainbowMultipleSparklePattern(); break;
+    case 7: basicPalettePattern(); break;
   }
 }
 
@@ -302,6 +304,18 @@ void whiteBeams() {
 
 ///////////////////////////////////////////
 
+
+void rainbowShimmering(int speed) {
+  EVERY_N_MILLISECONDS(speed) {
+    static uint8_t startIndex = 0;
+    startIndex = startIndex + 1; /* motion speed */
+    currentPalette = RainbowColors_p;
+    currentBlending = LINEARBLEND;
+    FillLEDsFromPaletteColors( startIndex);
+    FastLED.show();
+  }
+}
+
 void basicPalettePattern() {
   EVERY_N_MILLISECONDS(10) {
     ChangePalettePeriodically();
@@ -330,11 +344,8 @@ void ChangePalettePeriodically()
 
     if( lastSecond != secondHand) {
         lastSecond = secondHand;
-        // if( secondHand ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
-        // if( secondHand == 15)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
         if( secondHand == 0)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
-        if( secondHand == 35)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
-        // if( secondHand == 40)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
+        if( secondHand == 30)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
     }
 }
 
