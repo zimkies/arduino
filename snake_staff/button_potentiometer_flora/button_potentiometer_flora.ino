@@ -1,6 +1,7 @@
 #include <FastLED.h>
 #include <Button.h>
 
+
 // How many leds in your strip?
 #define NUM_LEDS 60
 
@@ -19,7 +20,7 @@
 #define LED_TYPE WS2811        // i'm using WS2811s, FastLED supports lots of different types.
 
 int currentMode = 0;
-#define MODE_COUNTS 3
+#define MODE_COUNTS 4;
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
@@ -57,20 +58,21 @@ void loop() {
 
 
   int patternMode = getPatternMode();
-  Serial.println("mode: ");
-  Serial.println(patternMode);
+  // Serial.println("mode: ");
+  // Serial.println(patternMode);
 
   switch(patternMode) {
     case 0: nothingPattern(); break;
-    case 1: zoomPattern(); break;
-    case 2: basicPalettePattern(); break;
+    case 1: rainbowSingleSparklePattern(); break;
+    case 2: zoomPattern(); break;
+    case 3: basicPalettePattern(); break;
   }
 }
 
 
 int getPatternMode() {
   if (modeButton.pressed()) {
-    Serial.println("Button 1 pressed");
+    // Serial.println("Button 1 pressed");
     currentMode = (currentMode + 1) % MODE_COUNTS;
   }
   return currentMode;
@@ -79,10 +81,58 @@ int getPatternMode() {
 // Nothing Pattern
 ///////////////////////////////////////////
 void nothingPattern() {
-  // EVERY_N_MILLISECONDS(10) {
+  EVERY_N_MILLISECONDS(10) {
     FastLED.clear();
     FastLED.show();
-  // }
+  }
+}
+///////////////////////////////////////////
+
+
+// multiColorSingleSparkle Pattern
+
+void rainbowSingleSparklePattern() {
+  singleSparklePattern(RainbowColors_p, LINEARBLEND);
+}
+
+///////////////////////////////////////////
+void singleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
+  EVERY_N_MILLISECONDS(10) {
+    static int sparklePosition = -1;
+    static int brightness;
+    static uint8_t colorIndex;
+    static bool forward;
+
+    EVERY_N_MILLISECONDS(1000) {
+      if (sparklePosition == -1) {
+        sparklePosition = random8() % NUM_LEDS;
+        colorIndex = random8() % 256;
+        brightness = 0;
+        forward = true;
+      }
+    }
+    // for that pixel, fade in then fade out:
+    // If we have a current sparkle, update it
+    if (sparklePosition != -1) {
+      if (brightness >= 255) {
+        forward = not forward;
+      }
+
+      if (brightness == 0 and not forward) {
+        sparklePosition = -1;
+        return;
+      }
+
+      if (forward) {
+        brightness++;
+      } else {
+        brightness--;
+      }
+
+      leds[sparklePosition] = ColorFromPalette(colorPalette, colorIndex, brightness, blending);
+      FastLED.show();
+    }
+  }
 }
 
 
@@ -130,7 +180,7 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
-        colorIndex += 3;
+        colorIndex += 1;
     }
 }
 
@@ -178,9 +228,9 @@ void SetupTotallyRandomPalette()
 ///////////////////////////////////////////
 void calibrateBrightness() {
   int brightness = getBrightnessValue();
-  Serial.print("brightness");
-  Serial.print(brightness);
-  Serial.print("\n");
+  // Serial.print("brightness");
+  // Serial.print(brightness);
+  // Serial.print("\n");
   FastLED.setBrightness(constrain(brightness, MIN_BRIGHTNESS, MAX_BRIGHTNESS));
 
 }
