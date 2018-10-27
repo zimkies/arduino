@@ -63,7 +63,7 @@ void loop() {
 
   switch(patternMode) {
     case 0: nothingPattern(); break;
-    case 1: rainbowSingleSparklePattern(); break;
+    case 1: rainbowMultipleSparklePattern(); break;
     case 2: zoomPattern(); break;
     case 3: basicPalettePattern(); break;
   }
@@ -106,6 +106,10 @@ void rainbowSingleSparklePattern() {
   singleSparklePattern(RainbowColors_p, LINEARBLEND);
 }
 
+void rainbowMultipleSparklePattern() {
+  multipleSparklePattern(RainbowColors_p, LINEARBLEND);
+}
+
 ///////////////////////////////////////////
 void singleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
   static bool firstRun = true;
@@ -145,6 +149,79 @@ void singleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
       if (sparkle.brightness == 0 and not sparkle.forward) {
         sparkle.active = false;
         return;
+      }
+    }
+  }
+}
+
+void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
+  static bool firstRun = true;
+  static Sparkle sparkles[5];
+  // On first run make sure that all sparkles are inactive
+  if (firstRun) {
+    for (int i=0; i < 5; i++) {
+      sparkles[i].active = false;
+    }
+
+    firstRun = false;
+  }
+
+  // Every 500ms, if there is an inactive sparkle, light a new one!
+  EVERY_N_MILLISECONDS(1000) {
+    for (int i=0; i < 5; i++) {
+      Serial.print("Looping through sparkles");
+
+      // Sparkle sparkle = sparkles[i];
+      if (not sparkles[i].active) {
+
+        Serial.print("initializing sparkles[i]\n");
+        sparkles[i].position = random8() % NUM_LEDS;
+        sparkles[i].colorIndex = random8() % 256;
+        sparkles[i].brightness = 0;
+        sparkles[i].forward = true;
+        sparkles[i].active = true;
+
+        Serial.print("Initialized sparkles[i]:");
+        Serial.print(i);
+        Serial.print("\n");
+        Serial.print(sparkles[i].position);
+        Serial.print("\n");
+        Serial.print(sparkles[i].brightness);
+        Serial.print("\n");
+        Serial.print(sparkles[i].forward);
+        Serial.print("\n");
+        Serial.print(sparkles[i].active);
+        Serial.print("\n");
+        break;
+      }
+    }
+  }
+
+  EVERY_N_MILLISECONDS(10) {
+    // for any active pixel, fade it in then fade out:
+    for (int i=0; i < 5; i++) {
+      Serial.print("Checking Sparkle:");
+
+      if (sparkles[i].active) {
+        Serial.print("Sparkle is active\n");
+        if (sparkles[i].brightness >= 255) {
+          sparkles[i].forward = not sparkles[i].forward;
+        }
+
+        if (sparkles[i].forward) {
+          sparkles[i].brightness++;
+        } else {
+          sparkles[i].brightness--;
+        }
+
+        leds[sparkles[i].position] = ColorFromPalette(colorPalette, sparkles[i].colorIndex, sparkles[i].brightness, blending);
+        FastLED.show();
+
+        // If we've faded out, then deactivate the sparkles[i].
+        if (sparkles[i].brightness == 0 and not sparkles[i].forward) {
+          sparkles[i].active = false;
+          return;
+        }
       }
     }
   }
