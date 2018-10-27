@@ -89,7 +89,18 @@ void nothingPattern() {
 ///////////////////////////////////////////
 
 
+
 // multiColorSingleSparkle Pattern
+
+class Sparkle
+{
+  public:
+    int position;
+    int colorIndex;
+    int brightness;
+    bool forward;
+    bool active;
+};
 
 void rainbowSingleSparklePattern() {
   singleSparklePattern(RainbowColors_p, LINEARBLEND);
@@ -97,46 +108,51 @@ void rainbowSingleSparklePattern() {
 
 ///////////////////////////////////////////
 void singleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
+  static bool firstRun = true;
   EVERY_N_MILLISECONDS(10) {
-    static int sparklePosition = -1;
-    static int brightness;
-    static uint8_t colorIndex;
-    static bool forward;
+    static Sparkle sparkle;
+    if (firstRun) {
+      sparkle.active = false;
+      firstRun = false;
+    }
 
     EVERY_N_MILLISECONDS(1000) {
-      if (sparklePosition == -1) {
-        sparklePosition = random8() % NUM_LEDS;
-        colorIndex = random8() % 256;
-        brightness = 0;
-        forward = true;
+      if (not sparkle.active) {
+        sparkle.position = random8() % NUM_LEDS;
+        sparkle.colorIndex = random8() % 256;
+        sparkle.brightness = 0;
+        sparkle.forward = true;
+        sparkle.active = true;
       }
     }
     // for that pixel, fade in then fade out:
     // If we have a current sparkle, update it
-    if (sparklePosition != -1) {
-      if (brightness >= 255) {
-        forward = not forward;
+    if (sparkle.active) {
+      if (sparkle.brightness >= 255) {
+        sparkle.forward = not sparkle.forward;
       }
 
-      if (brightness == 0 and not forward) {
-        sparklePosition = -1;
+      if (sparkle.forward) {
+        sparkle.brightness++;
+      } else {
+        sparkle.brightness--;
+      }
+
+      leds[sparkle.position] = ColorFromPalette(colorPalette, sparkle.colorIndex, sparkle.brightness, blending);
+      FastLED.show();
+
+      // If we've faded out, then deactivate the sparkle.
+      if (sparkle.brightness == 0 and not sparkle.forward) {
+        sparkle.active = false;
         return;
       }
-
-      if (forward) {
-        brightness++;
-      } else {
-        brightness--;
-      }
-
-      leds[sparklePosition] = ColorFromPalette(colorPalette, colorIndex, brightness, blending);
-      FastLED.show();
     }
   }
 }
 
 
 ///////////////////////////////////////////
+
 
 
 // Zoom back and forth pattern code
