@@ -20,7 +20,7 @@
 #define LED_TYPE WS2811        // i'm using WS2811s, FastLED supports lots of different types.
 
 int currentMode = 0;
-#define MODE_COUNTS 3;
+#define MODE_COUNTS 6;
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
@@ -68,17 +68,11 @@ void loop() {
   switch(patternMode) {
     //
     case 0: nothingPattern(); break;
-
-    case 1: basicPalettePattern(); break;
-    // case 0: nothingPattern(); break;
-    case 2: whiteBeams(); break;
-    // case 1: zoomIntervalPattern(); break;
-    // case 2: nothingPattern(); break;
-    // case 3: rainbowSingleSparklePattern(); break;
-    // case 4: nothingPattern(); break;
-    // case 5: rainbowMultipleSparklePattern(); break;
-    // case 6: nothingPattern(); break;
-    // case 7: basicPalettePattern(); break;
+    case 1: whiteBeams(); break;
+    case 2: zoomIntervalPattern(); break;
+    case 3: rainbowSingleSparklePattern(); break;
+    case 4: rainbowMultipleSparklePattern(); break;
+    case 5: basicPalettePattern(); break;
   }
 }
 
@@ -87,6 +81,8 @@ int getPatternMode() {
   if (modeButton.pressed()) {
     // Serial.println("Button 1 pressed");
     currentMode = (currentMode + 1) % MODE_COUNTS;
+    FastLED.clear();
+    FastLED.show();
   }
   return currentMode;
 }
