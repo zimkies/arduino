@@ -20,7 +20,7 @@
 #define LED_TYPE WS2811        // i'm using WS2811s, FastLED supports lots of different types.
 
 int currentMode = 0;
-#define MODE_COUNTS 4;
+#define MODE_COUNTS 5;
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
@@ -63,9 +63,10 @@ void loop() {
 
   switch(patternMode) {
     case 0: nothingPattern(); break;
-    case 1: rainbowMultipleSparklePattern(); break;
-    case 2: zoomPattern(); break;
-    case 3: basicPalettePattern(); break;
+    case 1: rainbowSingleSparklePattern(); break;
+    case 2: rainbowMultipleSparklePattern(); break;
+    case 3: zoomPattern(); break;
+    case 4: basicPalettePattern(); break;
   }
 }
 
@@ -183,18 +184,6 @@ void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
         sparkles[i].brightness = 0;
         sparkles[i].forward = true;
         sparkles[i].active = true;
-
-        Serial.print("Initialized sparkles[i]:");
-        Serial.print(i);
-        Serial.print("\n");
-        Serial.print(sparkles[i].position);
-        Serial.print("\n");
-        Serial.print(sparkles[i].brightness);
-        Serial.print("\n");
-        Serial.print(sparkles[i].forward);
-        Serial.print("\n");
-        Serial.print(sparkles[i].active);
-        Serial.print("\n");
         break;
       }
     }
@@ -203,10 +192,7 @@ void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
   EVERY_N_MILLISECONDS(10) {
     // for any active pixel, fade it in then fade out:
     for (int i=0; i < numSparkles; i++) {
-      Serial.print("Checking Sparkle:");
-
       if (sparkles[i].active) {
-        Serial.print("Sparkle is active\n");
         if (sparkles[i].brightness >= 255) {
           sparkles[i].forward = not sparkles[i].forward;
         }
@@ -319,7 +305,6 @@ void SetupTotallyRandomPalette()
         currentPalette[i] = CHSV( random8(), 255, random8());
     }
 }
-
 
 ///////////////////////////////////////////
 void calibrateBrightness() {
