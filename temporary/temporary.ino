@@ -156,10 +156,12 @@ void singleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
 
 void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
   static bool firstRun = true;
-  static Sparkle sparkles[5];
+  static int lastColor = random8() % 256;
+  const int numSparkles = 12;
+  static Sparkle sparkles[numSparkles];
   // On first run make sure that all sparkles are inactive
   if (firstRun) {
-    for (int i=0; i < 5; i++) {
+    for (int i=0; i < numSparkles; i++) {
       sparkles[i].active = false;
     }
 
@@ -168,7 +170,7 @@ void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
 
   // Every 500ms, if there is an inactive sparkle, light a new one!
   EVERY_N_MILLISECONDS(1000) {
-    for (int i=0; i < 5; i++) {
+    for (int i=0; i < numSparkles; i++) {
       Serial.print("Looping through sparkles");
 
       // Sparkle sparkle = sparkles[i];
@@ -176,7 +178,8 @@ void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
 
         Serial.print("initializing sparkles[i]\n");
         sparkles[i].position = random8() % NUM_LEDS;
-        sparkles[i].colorIndex = random8() % 256;
+        lastColor = lastColor + 3;
+        sparkles[i].colorIndex = lastColor;
         sparkles[i].brightness = 0;
         sparkles[i].forward = true;
         sparkles[i].active = true;
@@ -199,7 +202,7 @@ void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
 
   EVERY_N_MILLISECONDS(10) {
     // for any active pixel, fade it in then fade out:
-    for (int i=0; i < 5; i++) {
+    for (int i=0; i < numSparkles; i++) {
       Serial.print("Checking Sparkle:");
 
       if (sparkles[i].active) {
