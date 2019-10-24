@@ -1,9 +1,14 @@
 #include <FastLED.h>
 #include <Button.h>
 
+// TODO:
+// Pick random one each time we start
+// Do the slowly rising heart one
+// Make the heartbeat more 
+
 
 // How many leds in your strip?
-#define NUM_LEDS 60
+#define NUM_LEDS 64
 
 // For led chips like Neopixels, which have a data line, ground, and power, you just
 // need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
@@ -20,7 +25,7 @@
 #define LED_TYPE WS2811        // i'm using WS2811s, FastLED supports lots of different types.
 
 int currentMode = 0;
-#define MODE_COUNTS 8;
+#define MODE_COUNTS 5;
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
@@ -33,7 +38,8 @@ CRGBPalette16 currentPalette;
 TBlendType    currentBlending;
 
 CRGBPalette16 whitePalette;
-//
+CRGBPalette16 firePalette; 
+// LavaColors_p already defined
 
 void setup() {
   delay( 3000 ); // power-up safety delay
@@ -49,6 +55,11 @@ void setup() {
   currentBlending = LINEARBLEND;
 
   fill_solid(whitePalette, 16, CRGB::White);
+//  firePalette = CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::Yellow, CRGB::White);
+
+  // Don't ask me why green turns out as red, but it does  
+  firePalette = CRGBPalette16( CRGB::White, CRGB::Green, CRGB::Green, CRGB::Green);
+  FastLED.clear();
 }
 
 
@@ -64,13 +75,24 @@ void loop() {
   int patternMode = getPatternMode();
   // Serial.println("mode: ");
   // Serial.println(patternMode)
+
+    switch(patternMode) {
+    //
+    case 0: rainbowShimmering(50); break;
+    case 1: colorBeams(); break;
+    case 2: heartBeat(); break;
+    case 3: risingHeart(); break;
+    case 4: whiteBeams(); break;
+  }
  
 
-  //rainbowShimmering(50);
-//  colorBeams();
+//  rainbowShimmering(50);
+//  paletteShimmering(50, firePalette);
+
+//    colorBeams();
 //  whiteBeams();
-  heartBeat();
-  
+//    heartBeat();
+//    risingHeart();
 //  switch(patternMode) {
 //    //
 //    case 0: rainbowShimmering(100); break;
@@ -85,15 +107,57 @@ void loop() {
 
 
 int getPatternMode() {
-//  EVERY_N_MILLISECONDS(8000) {
-//    currentMode = (currentMode + 1) % MODE_COUNTS;
-//    FastLED.clear();
-//    FastLED.show();
-//  }
+  EVERY_N_MILLISECONDS(20000) {
+    currentMode = (currentMode + 1) % MODE_COUNTS;
+    FastLED.clear();
+    FastLED.show();
+  }
 
   return currentMode;
 
 }
+
+void risingHeart() {
+    static uint8_t maxBrightness = 255;
+    static int colorIndex = 100;
+    static int currentEndIndex = 0;
+    static int HEART_START_OFFSET = 3;
+    static int brightness = 0;
+    
+//    static int brightness = 200;
+
+      
+  EVERY_N_MILLISECONDS(200) {
+//    brightness = 250;
+    for( int i = 0; i < currentEndIndex ; i++) {
+        brightness = maxBrightness - 10 * (currentEndIndex - i);
+        if (currentEndIndex - i > 35) {
+          brightness = 0;
+        }
+
+        if (currentEndIndex - i == 1) {
+           leds[i + HEART_START_OFFSET] = CRGB::White;
+           leds[NUM_LEDS - i - HEART_START_OFFSET -2] = CRGB::White;
+        } else {
+        leds[i + HEART_START_OFFSET] = ColorFromPalette( currentPalette, colorIndex  , brightness, currentBlending);
+        leds[NUM_LEDS - i - HEART_START_OFFSET - 2] = ColorFromPalette( currentPalette, colorIndex , brightness, currentBlending);
+        }
+
+//        colorIndex += 1;
+    }
+    currentEndIndex +=1 ;
+
+    if ( currentEndIndex == NUM_LEDS - HEART_START_OFFSET -3) {
+      currentEndIndex =0;
+      colorIndex = random8() % 255;
+    }
+    
+
+//        FastLED.clear();
+    FastLED.show();
+  }
+}
+
 
 // Nothing Pattern
 ///////////////////////////////////////////
@@ -110,7 +174,7 @@ void heartBeat() {
   static int count = 0;
   static int startTime = 0;
   static int timeElapsed = 0;
-  static int brightness_low = 120;
+  static int brightness_low = 180;
   static int brightness_high = 255;
   static int brightness = 0;
   static int hue = 0;
@@ -118,34 +182,22 @@ void heartBeat() {
   
   EVERY_N_MILLISECONDS(1800) {
     startTime = millis();
-    isBeating = true;
     count = 0;
-    hue += 10;
+    hue += 7;
   }
 
-//  EVERY_N_MILLISECONDS(1200) {
-//    isBeating = false;
-//  }
-  
-  if (isBeating == true) {
 
-     timeElapsed = millis() - startTime;
+   timeElapsed = millis() - startTime;
 
-     if (timeElapsed > 550 ) {
-        if (brightness != 0) {
-          brightness--;
-        }
-//      isBeating = false;
-     } else if (timeElapsed < 200 || timeElapsed > 450) {
-       brightness = brightness_high;
-     } else {
-       brightness = brightness_low;
-     }
-
-  } else {
+   if (timeElapsed > 550 ) {
+      if (brightness != 0) {
+        brightness--;
+      }
+   } else if (timeElapsed < 200 || timeElapsed > 450) {
+     brightness = brightness_high;
+   } else {
      brightness = brightness_low;
-//    FastLED.clear();
-  }
+   }
 
   for( int i = 0; i < NUM_LEDS; i++) {
    leds[i] = CHSV(hue, 100, brightness);
@@ -386,6 +438,18 @@ void rainbowShimmering(int speed) {
     static uint8_t startIndex = 0;
     startIndex = startIndex + 1; /* motion speed */
     currentPalette = RainbowColors_p;
+    currentBlending = LINEARBLEND;
+    FillLEDsFromPaletteColors( startIndex);
+    FastLED.show();
+  }
+}
+
+
+void paletteShimmering(int speed, CRGBPalette16 palette) {
+  EVERY_N_MILLISECONDS(speed) {
+    static uint8_t startIndex = 0;
+    startIndex = startIndex + 1; /* motion speed */
+    currentPalette = palette;
     currentBlending = LINEARBLEND;
     FillLEDsFromPaletteColors( startIndex);
     FastLED.show();
