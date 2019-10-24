@@ -67,7 +67,7 @@ void loop() {
 
   switch(patternMode) {
     //
-    case 0: rainbowShimmering(100); break;
+    case 0: nothingPattern(); break;
     case 1: rainbowShimmering(100); break;
     case 2: rainbowShimmering(50); break;
     case 3: zoomIntervalPattern(); break;
@@ -390,4 +390,5 @@ int getBrightnessValue() {
   // map it to the range of the FastLED brightness:
   return map(analogRead(BRIGHTNESS_IN_PIN), 0, 1023, 0, 255);
 }
+
 

@@ -10,8 +10,8 @@
 // ground, and power), like the LPD8806, define both DATA_PIN and CLOCK_PIN
 #define DATA_PIN 6
 #define CLOCK_PIN 13
-#define MAX_BRIGHTNESS 164      // Thats full on, watch the power!
-#define MIN_BRIGHTNESS 1       // set to a minimum of 25%
+#define MAX_BRIGHTNESS 120      // Thats full on, watch the power!
+#define MIN_BRIGHTNESS 30       // set to a minimum of 25%
 #define BRIGHTNESS_IN_PIN 10    // The Analog input pin that the brightness control potentiometer is attached to.
 #define BUTTON_MODE_IN_PIN 9     // The PWM input for button mode
 
@@ -63,30 +63,36 @@ void loop() {
 
   int patternMode = getPatternMode();
   // Serial.println("mode: ");
-  // Serial.println(patternMode);
+  // Serial.println(patternMode)
+ 
 
-  switch(patternMode) {
-    //
-    case 0: rainbowShimmering(100); break;
-    case 1: rainbowShimmering(100); break;
-    case 2: rainbowShimmering(50); break;
-    case 3: zoomIntervalPattern(); break;
-    case 4: whiteBeams(); break;
-    case 5: rainbowSingleSparklePattern(); break;
-    case 6: rainbowMultipleSparklePattern(); break;
-    case 7: basicPalettePattern(); break;
-  }
+  //rainbowShimmering(50);
+//  colorBeams();
+//  whiteBeams();
+  heartBeat();
+  
+//  switch(patternMode) {
+//    //
+//    case 0: rainbowShimmering(100); break;
+//    case 1: rainbowShimmering(100); break;
+//    case 2: rainbowShimmering(50); break;
+//    case 3: zoomIntervalPattern(); break;
+//    case 4: whiteBeams(); break;
+//    case 5: rainbowMultipleSparklePattern(); break;
+//    case 6: basicPalettePattern(); break;
+//  }
 }
 
 
 int getPatternMode() {
-  if (modeButton.pressed()) {
-    // Serial.println("Button 1 pressed");
-    currentMode = (currentMode + 1) % MODE_COUNTS;
-    FastLED.clear();
-    FastLED.show();
-  }
+//  EVERY_N_MILLISECONDS(8000) {
+//    currentMode = (currentMode + 1) % MODE_COUNTS;
+//    FastLED.clear();
+//    FastLED.show();
+//  }
+
   return currentMode;
+
 }
 
 // Nothing Pattern
@@ -98,7 +104,54 @@ void nothingPattern() {
   }
 }
 ///////////////////////////////////////////
+void heartBeat() {
+  static bool isBeating = true;
+  static int colorIndex = 8;
+  static int count = 0;
+  static int startTime = 0;
+  static int timeElapsed = 0;
+  static int brightness_low = 120;
+  static int brightness_high = 255;
+  static int brightness = 0;
+  static int hue = 0;
 
+  
+  EVERY_N_MILLISECONDS(1800) {
+    startTime = millis();
+    isBeating = true;
+    count = 0;
+    hue += 10;
+  }
+
+//  EVERY_N_MILLISECONDS(1200) {
+//    isBeating = false;
+//  }
+  
+  if (isBeating == true) {
+
+     timeElapsed = millis() - startTime;
+
+     if (timeElapsed > 550 ) {
+        if (brightness != 0) {
+          brightness--;
+        }
+//      isBeating = false;
+     } else if (timeElapsed < 200 || timeElapsed > 450) {
+       brightness = brightness_high;
+     } else {
+       brightness = brightness_low;
+     }
+
+  } else {
+     brightness = brightness_low;
+//    FastLED.clear();
+  }
+
+  for( int i = 0; i < NUM_LEDS; i++) {
+   leds[i] = CHSV(hue, 100, brightness);
+  }   
+  FastLED.show();
+}
 
 
 // multiColorSingleSparkle Pattern
@@ -124,7 +177,7 @@ void rainbowMultipleSparklePattern() {
 ///////////////////////////////////////////
 void singleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
   static bool firstRun = true;
-  EVERY_N_MILLISECONDS(10) {
+  EVERY_N_MILLISECONDS(5) {
     static Sparkle sparkle;
     if (firstRun) {
       sparkle.active = false;
@@ -168,7 +221,7 @@ void singleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
 void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
   static bool firstRun = true;
   static int lastColor = random8() % 256;
-  const int numSparkles = 12;
+  const int numSparkles = 23;
   static Sparkle sparkles[numSparkles];
   // On first run make sure that all sparkles are inactive
   if (firstRun) {
@@ -180,7 +233,7 @@ void multipleSparklePattern(CRGBPalette16 colorPalette, TBlendType blending) {
   }
 
   // Every 500ms, if there is an inactive sparkle, light a new one!
-  EVERY_N_MILLISECONDS(750) {
+  EVERY_N_MILLISECONDS(500) {
     for (int i=0; i < numSparkles; i++) {
       Serial.print("Looping through sparkles");
 
@@ -267,30 +320,43 @@ void fadeall() { for(int i = 0; i < NUM_LEDS; i++) { leds[i].nscale8(250); } }
 ///////////////////////////////////////////
 
 // Basic Palette Code Pattern
-void whiteBeams() {
+
+
+void beams(bool useColor) {
   static bool fire_beam = false;
   static int startBlockIndex = 0;
-  const int blockLength = 5;
+  const int blockLength = 25;
   static int colorIndex = 0;
   const int brightness = 255;
   static const CRGBPalette16 colorPalette = whitePalette;
   static const TBlendType blending = LINEARBLEND;
 
-  EVERY_N_MILLISECONDS(3000) {
+  EVERY_N_MILLISECONDS(4000) {
     fire_beam = true;
-    startBlockIndex = 0;
+    startBlockIndex = -blockLength;
+    colorIndex = random8() % 256;
   }
 
-  EVERY_N_MILLISECONDS(10) {
+  EVERY_N_MILLISECONDS(25) {
     // Only light up if we have fire_beam on
     if (fire_beam) {
-      for( int i = 0; i < NUM_LEDS; i++) {
-        if (i >= startBlockIndex and i < startBlockIndex + 5) {
-          leds[i] = CRGB::White;//ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
+      for( int i = 0; i < NUM_LEDS + blockLength; i++) {
+        if (i < 0 || i > NUM_LEDS - 1) {
+          continue;
+        }
+        if (i >= startBlockIndex and i < startBlockIndex + blockLength) {
+          if (useColor) {
+            leds[i] = ColorFromPalette( currentPalette, colorIndex + i, brightness, currentBlending);
+            
+
+
+          } else {
+            leds[i] = CRGB::White;//ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
+
+          }
         } else {
           leds[i] = CRGB::Black;
         }
-        colorIndex += 1;
       }
       FastLED.show();
       startBlockIndex++;
@@ -301,6 +367,16 @@ void whiteBeams() {
     }
   }
 }
+
+void colorBeams() {
+  beams(true);
+}
+
+void whiteBeams() {
+  beams(false);
+
+}
+
 
 ///////////////////////////////////////////
 

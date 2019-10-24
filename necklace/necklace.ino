@@ -1,10 +1,13 @@
-#include <Button.h>
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
 
 #define PIN 6
+#define MAX_BRIGHTNESS 100      // Thats full on, watch the power!
+#define HEART_LENGTH 24
+
+
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
@@ -15,20 +18,6 @@
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(60, PIN, NEO_GRB + NEO_KHZ800);
-
-const int ledPin = 6;    // LED connected to digital pin 9
-const int potentiometerPin = 0;
-
-const int buttonAPin = 3;
-bool lightIsOn = false;
-int val;
-
-Button button1(buttonAPin, 100); // Connect your button between pin 2 and GND
-
-int getBrightnessFromPotentiometerValue(int value) {
-  return 50;
-  return map(value, 0, 1024, 0, 255);
-}
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -42,64 +31,62 @@ void setup() {
   #endif
   // End of trinket special code
 
-  button1.begin();
-  pinMode(ledPin, OUTPUT);  
-
-  Serial.begin(9600);
-
 
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
+  strip.setBrightness(MAX_BRIGHTNESS);
 }
 
-
-
-
 void loop() {
-
-  if (button1.pressed()) {
-    Serial.println("Button 1 pressed");
-    lightIsOn = not lightIsOn;
-  }
-
-  val = analogRead(potentiometerPin);
-      Serial.println("val: ");
-      Serial.println(val);
-  int brightness = getBrightnessFromPotentiometerValue(val);
-      Serial.println("brightness: ");
-      Serial.println(brightness);
-
-
-  if (lightIsOn == true) {
-    analogWrite(ledPin, brightness); 
-  } else {
-     analogWrite(ledPin, 0); 
-  }
   // Some example procedures showing how to display to the pixels:
-  //colorWipe(strip.Color(255, 0, 0), 50); // Red
-  //colorWipe(strip.Color(0, 255, 0), 50); // Green
-  //colorWipe(strip.Color(0, 0, 255), 50); // Blue
+  colorWipeDouble(strip.Color(255, 0, 0), 250); // Red
+  //  colorWipe(strip.Color(0, 0, 0), 50); // Green
+  colorWipeDouble(strip.Color(0, 0, 0), 250); // Uncolor
+  colorWipeDoubleReverse(strip.Color(255, 0, 0), 250); // Red
+
+//  colorWipe(strip.Color(0, 255, 0), 50); // Green
+//  colorWipe(strip.Color(0, 0, 255), 50); // Blue
 //colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW
   // Send a theater pixel chase in...
-  //theaterChase(strip.Color(127, 127, 127), 50); // White
-  //theaterChase(strip.Color(127, 0, 0), 50); // Red
-  //theaterChase(strip.Color(0, 0, 127), 50); // Blue
+//  theaterChase(strip.Color(127, 127, 127), 50); // White
+  theaterChase(strip.Color(127, 0, 0), 50); // Red
+//  theaterChase(strip.Color(0, 0, 127), 50); // Blue
 
-      Serial.println("Rainbow 20");
-
-  rainbow(20);
-        Serial.println("RainbowCycel 20");
-
+//  rainbow(20);
   rainbowCycle(20);
-          Serial.println("Theater Chase");
-
-  theaterChaseRainbow(50);
+//  theaterChaseRainbow(50);
 }
 
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait) {
   for(uint16_t i=0; i<strip.numPixels(); i++) {
     strip.setPixelColor(i, c);
+    strip.show();
+    delay(wait);
+        delay(wait);
+
+  }
+}
+
+void colorWipeDouble(uint32_t c, uint8_t wait) {
+  int halfSize = HEART_LENGTH / 2;
+  
+  for(uint16_t i=0; i<halfSize; i++) {
+    strip.setPixelColor(i, c);
+    strip.setPixelColor(HEART_LENGTH - i, c);
+
+    strip.show();
+    delay(wait);
+  }
+}
+
+void colorWipeDoubleReverse(uint32_t c, uint8_t wait) {
+  int halfSize = HEART_LENGTH / 2;
+  
+  for(uint16_t i=0; i<halfSize; i++) {
+    strip.setPixelColor(halfSize  - i, c);
+    strip.setPixelColor(halfSize +i, c);
+
     strip.show();
     delay(wait);
   }
