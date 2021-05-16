@@ -54,12 +54,15 @@ void setup() {
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
 
+
   fill_solid(whitePalette, 16, CRGB::White);
 //  firePalette = CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::Yellow, CRGB::White);
 
   // Don't ask me why green turns out as red, but it does  
   firePalette = CRGBPalette16( CRGB::White, CRGB::Green, CRGB::Green, CRGB::Green);
   FastLED.clear();
+  currentMode = random8() % MODE_COUNTS;
+
 }
 
 
@@ -84,38 +87,40 @@ void loop() {
     case 3: risingHeart(); break;
     case 4: whiteBeams(); break;
   }
- 
 
-//  rainbowShimmering(50);
-//  paletteShimmering(50, firePalette);
-
-//    colorBeams();
-//  whiteBeams();
-//    heartBeat();
-//    risingHeart();
-//  switch(patternMode) {
-//    //
-//    case 0: rainbowShimmering(100); break;
-//    case 1: rainbowShimmering(100); break;
-//    case 2: rainbowShimmering(50); break;
-//    case 3: zoomIntervalPattern(); break;
-//    case 4: whiteBeams(); break;
-//    case 5: rainbowMultipleSparklePattern(); break;
-//    case 6: basicPalettePattern(); break;
-//  }
 }
 
 
 int getPatternMode() {
-  EVERY_N_MILLISECONDS(20000) {
-    currentMode = (currentMode + 1) % MODE_COUNTS;
-    FastLED.clear();
-    FastLED.show();
+  static uint64_t startTime = millis();
+  static uint64_t timeElapsed;
+  
+  EVERY_N_MILLISECONDS(2005) {
+    timeElapsed = millis() - startTime;
+    
+    if (timeElapsed > getModeCycleTime(currentMode)) {
+      currentMode = random8() % MODE_COUNTS;
+      FastLED.clear();
+      FastLED.show();
+      startTime = millis();
+      
+    }
   }
 
   return currentMode;
 
 }
+
+uint32_t getModeCycleTime(int mode) {
+//  return 1000;
+  switch(mode) {
+    case 0: return 30000; break;
+    case 3: return 30000; break;
+    default: return 20000;
+   }
+}
+
+
 
 void risingHeart() {
     static uint8_t maxBrightness = 255;
